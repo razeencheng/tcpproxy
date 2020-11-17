@@ -21,6 +21,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
+	"path"
 	"sync"
 	"time"
 )
@@ -39,7 +41,13 @@ func main() {
 		log.Fatalf("Failed to read config %q: %s", *cfgFile, err)
 	}
 
+	go http.ListenAndServe(":80", http.HandlerFunc(httpRedirect))
 	log.Fatalf("%s", p.ListenAndServe(*listen))
+}
+
+func httpRedirect(w http.ResponseWriter, r *http.Request) {
+	uri := path.Join("https://", r.Host, r.RequestURI)
+	http.Redirect(w, r, uri, http.StatusMovedPermanently)
 }
 
 // Proxy routes connections to backends based on a Config.
